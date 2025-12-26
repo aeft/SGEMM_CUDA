@@ -67,7 +67,10 @@ make bench
 - [ ] Kernel 10: Warptiling
 - [ ] Kernel 11: Double Buffering
 
-## Learning Notes
+## Hints
 
 ### Kernel 1: Naive Implementation
-...
+1. Understand `blockIdx`, `blockDim`, and `threadIdx` in CUDA programs.
+2. Matrix dimension transformation: MxK * KxN = MxN
+
+## Notes
