@@ -14,3 +14,8 @@ simplest
 
 # benchmark results
 benchmark_results/
+.venv/
+__pycache__/
+.claude/
+*.egg-info/
+.cache/

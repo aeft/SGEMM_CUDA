@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 import pandas as pd
 from pathlib import Path
+from datetime import datetime
 
 # this makes all plots look nicer, and high dpi
 # sn.set_theme(style="whitegrid", font_scale=1.0, rc={"figure.dpi": 200})
@@ -59,7 +60,8 @@ def plot(df: pd.DataFrame):
 
     We want to plot the gflops for each kernel, for each size as a single seaborn multi-line plot.
     """
-    save_dir = Path.cwd()
+    save_dir = Path("benchmark_results")
+    save_dir.mkdir(exist_ok=True)
 
     plt.figure(figsize=(18, 10))
     colors = sn.color_palette("husl", len(df["kernel"].unique()))
@@ -93,7 +95,9 @@ def plot(df: pd.DataFrame):
     plt.ylabel("GFLOPs/s")
     plt.tight_layout()
 
-    plt.savefig(save_dir / "benchmark_results.png")
+    # Generate filename with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d%H%M")
+    plt.savefig(save_dir / f"{timestamp}.png")
 
 
 if __name__ == "__main__":
@@ -119,18 +123,10 @@ if __name__ == "__main__":
     df["relperf"] = df["relperf"].apply(lambda x: f"{x*100:.1f}%")
     df.columns = ["Kernel", "GFLOPs/s", "Performance relative to cuBLAS"]
 
-    # update the README.md with the new results
-    with open("README.md", "r") as f:
-        readme = f.read()
-    # delete old results
-    readme = re.sub(
-        r"<!-- benchmark_results -->.*<!-- benchmark_results -->",
-        "<!-- benchmark_results -->\n{}\n<!-- benchmark_results -->".format(
-            df.to_markdown(index=False)
-        ),
-        readme,
-        flags=re.DOTALL,
-    )
-    # input new results
-    with open("README.md", "w") as f:
-        f.write(readme)
+    # Save results to a markdown file with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d%H%M")
+    results_file = results_dir / f"{timestamp}.md"
+    with open(results_file, "w") as f:
+        f.write("# Benchmark Results\n\n")
+        f.write(df.to_markdown(index=False))
+        f.write(f"\n\n![Benchmark Results](./{timestamp}.png)\n")

@@ -8,8 +8,8 @@ find_package(CUDA REQUIRED)
 include(CheckLanguage)
 check_language(CUDA)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CUDA_COMPUTE_CAPABILITY 86)
+set(CMAKE_CXX_STANDARD 17)
+set(CUDA_COMPUTE_CAPABILITY 80)
 
 # in debug mode, add debug symbols to device code
 # this disables most optimizations and kills performance
@@ -34,3 +34,10 @@ target_link_libraries(cuBLAS_sgemm ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 add_executable(simplest_kernel simplest_kernel.cu)
 set_target_properties(sgemm PROPERTIES CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})
 target_link_libraries(simplest_kernel ${CUDA_LIBRARIES})
+
+# Practice SGEMM - for learning and experimentation
+aux_source_directory(${PROJECT_SOURCE_DIR}/src_practice SRC_PRACTICE)
+add_executable(sgemm_practice sgemm.cu ${SRC_PRACTICE})
+set_target_properties(sgemm_practice PROPERTIES CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})
+target_include_directories(sgemm_practice PRIVATE ${PROJECT_SOURCE_DIR}/src_practice)
+target_link_libraries(sgemm_practice ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})

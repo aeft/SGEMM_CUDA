@@ -14,4 +14,9 @@ for kernel in {0..10}; do
     sleep 2
 done
 
-python3 plot_benchmark_results.py
+# Use venv python if available, otherwise fallback to system python3
+if [ -f ".venv/bin/python" ]; then
+    .venv/bin/python plot_benchmark_results.py
+else
+    python3 plot_benchmark_results.py
+fi

@@ -1,4 +1,4 @@
-.PHONY: all build debug clean profile bench cuobjdump
+.PHONY: all build debug clean profile bench cuobjdump test practice compare
 
 CMAKE := cmake
 
@@ -32,3 +32,20 @@ profile: build
 
 bench: build
 	@bash gen_benchmark_results.sh
+
+# Usage: make test KERNEL=1
+# Test original implementation
+test: build
+	@$(BUILD_DIR)/sgemm $(KERNEL)
+
+# Usage: make practice KERNEL=1
+# Test practice implementation
+practice: build
+	@$(BUILD_DIR)/sgemm_practice $(KERNEL)
+
+# Usage: make compare KERNEL=1
+# Compare original vs practice
+# Or: make compare KERNEL="1 2 3" to compare multiple kernels
+# Or: make compare KERNEL=1 PRACTICE_ONLY=1 to run only practice version
+compare: build
+	@bash compare_kernels.sh $(KERNEL) $(if $(PRACTICE_ONLY),--practice,)

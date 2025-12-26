@@ -2,3 +2,16 @@ CompileFlags:
   Remove:
     - -forward-unknown-to-host-compiler
     - --generate-code*
+    - --options-file*
+  Add:
+    - -x
+    - cuda
+    - -std=c++17
+    - --cuda-path=/opt/linux/centos/8.x/x86_64/pkgs/cuda/12.1
+    - --cuda-gpu-arch=sm_80
+    - -D__CUDACC__
+    - -I/rhome/zwang711/bigdata/workspace/SGEMM_CUDA/src
+
+# Diagnostics:
+  # Suppress:
+    # - undeclared_var_use_suggest

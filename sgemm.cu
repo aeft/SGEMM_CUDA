@@ -112,19 +112,19 @@ int main(int argc, char **argv) {
             << "Failed to pass the correctness verification against NVIDIA "
                "cuBLAS."
             << std::endl;
-        if (m <= 128) {
-          std::cout << " Logging faulty output into " << errLogFile << "\n";
-          std::ofstream fs;
-          fs.open(errLogFile);
-          fs << "A:\n";
-          print_matrix(A, m, n, fs);
-          fs << "B:\n";
-          print_matrix(B, m, n, fs);
-          fs << "C:\n";
-          print_matrix(C, m, n, fs);
-          fs << "Should:\n";
-          print_matrix(C_ref, m, n, fs);
-        }
+        // if (m <= 128) {
+        //   std::cout << " Logging faulty output into " << errLogFile << "\n";
+        //   std::ofstream fs;
+        //   fs.open(errLogFile);
+        //   fs << "A:\n";
+        //   print_matrix(A, m, n, fs);
+        //   fs << "B:\n";
+        //   print_matrix(B, m, n, fs);
+        //   fs << "C:\n";
+        //   print_matrix(C, m, n, fs);
+        //   fs << "Should:\n";
+        //   print_matrix(C_ref, m, n, fs);
+        // }
         exit(EXIT_FAILURE);
       }
     }
