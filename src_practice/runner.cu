@@ -162,7 +162,9 @@ void run_sgemm_naive(int M, int N, int K, float alpha, float *A, float *B,
 
 void run_sgemm_coalesce(int M, int N, int K, float alpha, float *A, float *B,
                         float beta, float *C) {
-  throw std::runtime_error("Kernel 2 (Global Memory Coalesce) not implemented yet");
+  dim3 gridDim(CEIL_DIV(M, 32), CEIL_DIV(N, 32));
+  dim3 blockDim(32 * 32);
+  sgemm_global_mem_coalesce<<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
 void run_sgemm_shared_mem_block(int M, int N, int K, float alpha, float *A,
