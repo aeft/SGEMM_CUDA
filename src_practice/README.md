@@ -67,21 +67,32 @@ make bench
 - [ ] Kernel 10: Warptiling
 - [ ] Kernel 11: Double Buffering
 
-## Hints
+## Kernels
 
 ### Kernel 1: Naive Implementation
+
+1. Just translate the mathematics.
+2. Each thread computes one element of C.
+
+#### Hints
+
 1. Understand `blockIdx`, `blockDim`, and `threadIdx` in CUDA programs.
 2. Matrix dimension transformation: MxK * KxN = MxN
 3. Global memory access: 2MNK
 
 ### Kernel 2: Global Memory Coalescing
+
+1. Apply the idea of “warp coalesced memory access”.
+2. Each thread still computes one element of C.
+
+#### Hints
+
 1. Understand warp coalesced memory access.
 2. Ensure threads within a warp access consecutive addresses in B and C.
-3. Global memory access: 2MNK; fetches data faster than Kernel 1 due to coalesced memory access.
+3. Global memory access: O(2MNK); fetches data faster than Kernel 1 due to coalesced memory access.
 
-## Notes
+#### Notes
 
-### Kernel 2: Global Memory Coalescing
 Why can “coalesced memory access” accelerate the execution？
 
 Coalesced memory access accelerates execution because it reduces the number of memory transactions and thus overall memory traffic.
@@ -95,3 +106,18 @@ You may also ask: aren’t threads in a single warp accessing memory in parallel
 Although threads in a warp issue memory accesses in parallel, the memory system itself has limited service parallelism, constrained by channels, banks, and transaction pipelines.
 
 When a warp generates many memory transactions, these transactions contend for the same memory resources and are partially serialized. Since a warp cannot proceed until all its memory transactions complete, this contention causes the entire warp to stall.
+
+### Kernel 3: Shared Memory Blocking
+
+1. Use shared memory to reuse global memory data and reduce global memory traffic.
+2. Each thread still computes one element of C.
+
+#### Hints
+
+1. Based on Kernel 2.
+2. For each thread block, iteratively load blocks (aka tiles) from A and B along the K dimension into shared memory.
+3. Use `__syncthreads()` to ensure all threads in the block finish loading before computation. Similarly, use `__syncthreads()` after computation to ensure all threads finish using shared memory before loading new data.
+4. With K-dimension tiling of size T (e.g., 32):
+   - Global memory loads are reduced from O(2MNK) to O(2MNK / T).
+   - Each element loaded from global memory is reused.
+   - Shared memory accesses remain O(2MNK), but are much cheaper than global memory accesses.

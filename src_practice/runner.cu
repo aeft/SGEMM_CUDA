@@ -164,12 +164,15 @@ void run_sgemm_coalesce(int M, int N, int K, float alpha, float *A, float *B,
                         float beta, float *C) {
   dim3 gridDim(CEIL_DIV(M, 32), CEIL_DIV(N, 32));
   dim3 blockDim(32 * 32);
-  sgemm_global_mem_coalesce<<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
+  sgemm_global_mem_coalesce<<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta,
+                                                   C);
 }
 
 void run_sgemm_shared_mem_block(int M, int N, int K, float alpha, float *A,
                                 float *B, float beta, float *C) {
-  throw std::runtime_error("Kernel 3 (Shared Memory Blocking) not implemented yet");
+  dim3 gridDim(CEIL_DIV(M, 32), CEIL_DIV(N, 32));
+  dim3 blockDim(32 * 32);
+  sgemm_shared_mem_block<<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
 void runSgemm1DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
@@ -189,12 +192,14 @@ void runSgemmVectorize(int M, int N, int K, float alpha, float *A, float *B,
 
 void runSgemmResolveBankConflicts(int M, int N, int K, float alpha, float *A,
                                   float *B, float beta, float *C) {
-  throw std::runtime_error("Kernel 7 (Resolve Bank Conflicts) not implemented yet");
+  throw std::runtime_error(
+      "Kernel 7 (Resolve Bank Conflicts) not implemented yet");
 }
 
 void runSgemmResolveBankExtraCol(int M, int N, int K, float alpha, float *A,
                                  float *B, float beta, float *C) {
-  throw std::runtime_error("Kernel 8 (Resolve Bank Extra Col) not implemented yet");
+  throw std::runtime_error(
+      "Kernel 8 (Resolve Bank Extra Col) not implemented yet");
 }
 
 void runSgemmAutotuned(int M, int N, int K, float alpha, float *A, float *B,
@@ -214,7 +219,8 @@ void runSgemmDoubleBuffering(int M, int N, int K, float alpha, float *A,
 
 void runSgemmDoubleBuffering2(int M, int N, int K, float alpha, float *A,
                               float *B, float beta, float *C) {
-  throw std::runtime_error("Kernel 12 (Double Buffering 2) not implemented yet");
+  throw std::runtime_error(
+      "Kernel 12 (Double Buffering 2) not implemented yet");
 }
 void run_kernel(int kernel_num, int M, int N, int K, float alpha, float *A,
                 float *B, float beta, float *C, cublasHandle_t handle) {
