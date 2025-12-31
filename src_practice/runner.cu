@@ -177,7 +177,15 @@ void run_sgemm_shared_mem_block(int M, int N, int K, float alpha, float *A,
 
 void runSgemm1DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
                            float beta, float *C) {
-  throw std::runtime_error("Kernel 4 (1D Blocktiling) not implemented yet");
+  const int BM = 64;
+  const int BN = 64;
+  const int BK = 8;
+  const int TM = 8;
+  dim3 gridDim(CEIL_DIV(M, BM), CEIL_DIV(N, BN));
+  dim3 blockDim(BM * BN / TM);
+
+  Sgemm1DBlocktiling<BM, BN, BK, TM>
+      <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
 void runSgemm2DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,

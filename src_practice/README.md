@@ -121,3 +121,11 @@ When a warp generates many memory transactions, these transactions contend for t
    - Global memory loads are reduced from O(2MNK) to O(2MNK / T).
    - Each element loaded from global memory is reused.
    - Shared memory accesses remain O(2MNK), but are much cheaper than global memory accesses.
+
+### Kernel 4: 1D Blocktiling
+1. Each thread computes TM element of C. For example, set TM to 8.
+
+#### Hints
+1. This is about reducing shared memory traffic. Can we compute some loops using as few variables as possible? This allows the compiler to more easily allocate registers for them.
+2. Set the block tile size in the M/N dimensions to 64 and the size in the K dimension to 8. Set TM to 8. This means there are M×N/TM=512 threads in one thread block.
+3. We still iterate over the K dimension. In each iteration, one block of A and one block of B are loaded to shared memory.
