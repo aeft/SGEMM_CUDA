@@ -129,3 +129,21 @@ When a warp generates many memory transactions, these transactions contend for t
 1. This is about reducing shared memory traffic. Can we compute some loops using as few variables as possible? This allows the compiler to more easily allocate registers for them.
 2. Set the block tile size in the M/N dimensions to 64 and the size in the K dimension to 8. Set TM to 8. This means there are M×N/TM=512 threads in one thread block.
 3. We still iterate over the K dimension. In each iteration, one block of A and one block of B are loaded to shared memory.
+
+### Kernel 5: 2D Blocktiling
+1. Each thread computes TM×TN element of C. For example, set TM=TN=8.
+
+#### Hints
+1. When TN=1, the implementation should be equivalent to 1D Blocktiling (you can use this to quickly check whether the implementation is correct).
+
+#### Notes
+(Test Size: 4096)
+| Block Size | Thread Tile | Threads/Block | Warps/Block | Total Blocks | Work/Thread | GFLOPS |
+|-------|-------|---------|-------|--------|-------------|--------|
+| 64    | 8×1   | 512     | 16    | 4096   | 8           | 11061.7|
+| 64    | 8×8   | 64      | 2     | 4096   | 64          | 13245.0|
+| 128   | 8×8   | 256     | 8     | 1024   | 64          | 14632.4|
+
+Row 2 outperforms Row 1: 2D blocktiling improves data reuse. Each loaded value contributes to TM×TN outputs instead of TM, increasing arithmetic intensity.
+
+Row 3 outperforms Row 2: (1) More warps per block (8 vs 2) enables better latency hiding; (2) Fewer total blocks (1024 vs 4096) reduces kernel launch overhead and duplicate data loading from global memory.

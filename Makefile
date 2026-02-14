@@ -12,11 +12,6 @@ build:
 	@cd $(BUILD_DIR) && $(CMAKE) -DCMAKE_BUILD_TYPE=Release ..
 	@$(MAKE) -C $(BUILD_DIR)
 
-debug:
-	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && $(CMAKE) -DCMAKE_BUILD_TYPE=Debug ..
-	@$(MAKE) -C $(BUILD_DIR)
-
 clean:
 	@rm -rf $(BUILD_DIR)
 
@@ -33,19 +28,24 @@ profile: build
 bench: build
 	@bash gen_benchmark_results.sh
 
-# Usage: make test KERNEL=1
-# Test original implementation
-test: build
-	@$(BUILD_DIR)/sgemm $(KERNEL)
+# Usage: make reference KERNEL=1
+# Test reference implementation
+reference: build
+	@$(BUILD_DIR)/sgemm $(KERNEL) $(SIZE)
 
 # Usage: make practice KERNEL=1
 # Test practice implementation
 practice: build
-	@$(BUILD_DIR)/sgemm_practice $(KERNEL)
+	@$(BUILD_DIR)/sgemm_practice $(KERNEL) $(SIZE)
 
 # Usage: make compare KERNEL=1
-# Compare original vs practice
+# Compare reference vs practice
 # Or: make compare KERNEL="1 2 3" to compare multiple kernels
 # Or: make compare KERNEL=1 PRACTICE_ONLY=1 to run only practice version
 compare: build
 	@bash compare_kernels.sh $(KERNEL) $(if $(PRACTICE_ONLY),--practice,)
+
+# Build and run debug helper
+debug:
+	@nvcc -o ./build/debug debug.cu src_practice/runner.cu -Isrc_practice -lcublas -arch=sm_75
+	@./build/debug

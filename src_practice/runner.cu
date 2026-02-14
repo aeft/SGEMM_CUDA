@@ -190,7 +190,16 @@ void runSgemm1DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
 
 void runSgemm2DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
                            float beta, float *C) {
-  throw std::runtime_error("Kernel 5 (2D Blocktiling) not implemented yet");
+  const int BM = 128;
+  const int BN = 128;
+  const int BK = 8;
+  const int TM = 8;
+  const int TN = 8;
+  dim3 gridDim(CEIL_DIV(M, BM), CEIL_DIV(N, BN));
+  dim3 blockDim(BM * BN / (TM * TN));
+
+  Sgemm2DBlocktiling<BM, BN, BK, TM, TN>
+      <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
 void runSgemmVectorize(int M, int N, int K, float alpha, float *A, float *B,

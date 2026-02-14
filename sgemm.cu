@@ -1,9 +1,11 @@
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <fstream>
 #include <iostream>
 #include <runner.cuh>
+#include <sstream>
+#include <tuple>
 #include <vector>
 
 #define cudaCheck(err) (cudaCheck(err, __FILE__, __LINE__))
@@ -11,8 +13,11 @@
 const std::string errLogFile = "matrixValidationFailure.txt";
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    std::cerr << "Please select a kernel (range 0 - 12, 0 for NVIDIA cuBLAS)"
+  if (argc != 2 && argc != 3) {
+    std::cerr << "Usage: " << argv[0] << " <kernel_num> [size_config]"
+              << std::endl;
+    std::cerr << "  kernel_num: 0-12 (0 for NVIDIA cuBLAS)" << std::endl;
+    std::cerr << "  size_config (optional): M,N,K (e.g., \"128,128,64\")"
               << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -53,10 +58,39 @@ int main(int argc, char **argv) {
   cudaEventCreate(&end);
 
   // cuBLAS FLOPs ceiling is reached at 8192
-  std::vector<int> SIZE = {128, 256, 512, 1024, 2048, 4096};
+  std::vector<std::tuple<int, int, int>> SIZE;
 
-  long m, n, k, max_size;
-  max_size = SIZE[SIZE.size() - 1];
+  if (argc == 3) {
+    // Parse size configuration from argv[2]
+    std::string size_config = argv[2];
+    std::stringstream ss(size_config);
+    std::string token;
+    std::vector<int> dims;
+
+    while (std::getline(ss, token, ',')) {
+      dims.push_back(std::stoi(token));
+    }
+
+    if (dims.size() != 3) {
+      std::cerr << "Invalid size config. Expected M,N,K format" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+
+    SIZE.push_back(std::make_tuple(dims[0], dims[1], dims[2]));
+  } else {
+    // Default: use square matrices
+    std::vector<int> default_sizes = {128, 256, 512, 1024, 2048, 4096};
+    for (int s : default_sizes) {
+      SIZE.push_back(std::make_tuple(s, s, s));
+    }
+  }
+
+  long m, n, k, max_size = 0;
+  for (const auto &size : SIZE) {
+    max_size =
+        std::max(max_size, (long)std::max({std::get<0>(size), std::get<1>(size),
+                                           std::get<2>(size)}));
+  }
   std::cout << "Max size: " << max_size << std::endl;
 
   float alpha = 0.5, beta = 3.0; // GEMM input parameters, C=α*AB+β*C
@@ -90,11 +124,13 @@ int main(int argc, char **argv) {
                        cudaMemcpyHostToDevice));
 
   int repeat_times = 50;
-  for (int size : SIZE) {
-    m = n = k = size;
+  for (const auto &size : SIZE) {
+    m = std::get<0>(size);
+    n = std::get<1>(size);
+    k = std::get<2>(size);
 
-    std::cout << "dimensions(m=n=k) " << m << ", alpha: " << alpha
-              << ", beta: " << beta << std::endl;
+    std::cout << "dimensions(M=" << m << ", N=" << n << ", K=" << k
+              << "), alpha: " << alpha << ", beta: " << beta << std::endl;
     // Verify the correctness of the calculation, and execute it once before the
     // kernel function timing to avoid cold start errors
     if (kernel_num != 0) {
