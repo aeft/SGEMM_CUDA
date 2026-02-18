@@ -14,21 +14,29 @@ __global__ void SgemmVectorize(int M, int N, int K, float alpha, const float *A,
   int threadRowInBlock = threadIdx.x / threadPerRow;
   int threadColInBlock = threadIdx.x % threadPerRow;
 
-  __shared__ float sharedA[BM * BK], sharedB[BK * BN];
+  __shared__ float sharedA[BK * BM]; // transposed tile of A in shared memory
+  __shared__ float sharedB[BK * BN];
+
   float localC[TM][TN] = {0.0};
   for (int kBlockStart = 0; kBlockStart < K; kBlockStart += BK) {
-    // Load to shared memory
     // Load to sharedA
+    // Load 4 elements of A and transpose them while storing to shared memory
     int threadPerRowLoadA = BK / 4;
-    int aRow = blockIdx.x * BM + (threadIdx.x / threadPerRowLoadA);
-    int aCol = kBlockStart + (threadIdx.x % threadPerRowLoadA) * 4;
-    float4 tmpA = reinterpret_cast<const float4 *>(&A[aRow * K + aCol])[0];
-    reinterpret_cast<float4 *>(&sharedA[threadIdx.x * 4])[0] = tmpA;
+    int loadRowA = threadIdx.x / threadPerRowLoadA;
+    int loadColA = threadIdx.x % threadPerRowLoadA;
+    int rowA = blockIdx.x * BM + loadRowA;
+    int colA = kBlockStart + loadColA * 4;
+    float4 tmpA = reinterpret_cast<const float4 *>(&A[rowA * K + colA])[0];
+    sharedA[(loadColA * 4 + 0) * BM + loadRowA] =
+        tmpA.x; // Transpose while storing
+    sharedA[(loadColA * 4 + 1) * BM + loadRowA] = tmpA.y;
+    sharedA[(loadColA * 4 + 2) * BM + loadRowA] = tmpA.z;
+    sharedA[(loadColA * 4 + 3) * BM + loadRowA] = tmpA.w;
     // Load to sharedB
     int threadPerRowLoadB = BN / 4;
-    int bRow = kBlockStart + (threadIdx.x / threadPerRowLoadB);
-    int bCol = blockIdx.y * BN + (threadIdx.x % threadPerRowLoadB) * 4;
-    float4 tmpB = reinterpret_cast<const float4 *>(&B[bRow * N + bCol])[0];
+    int rowB = kBlockStart + (threadIdx.x / threadPerRowLoadB);
+    int colB = blockIdx.y * BN + (threadIdx.x % threadPerRowLoadB) * 4;
+    float4 tmpB = reinterpret_cast<const float4 *>(&B[rowB * N + colB])[0];
     reinterpret_cast<float4 *>(&sharedB[threadIdx.x * 4])[0] = tmpB;
     __syncthreads();
     for (int tmIdx = 0; tmIdx < TM; tmIdx++) {   // iterate over thread tile (M)
@@ -37,7 +45,7 @@ __global__ void SgemmVectorize(int M, int N, int K, float alpha, const float *A,
           int sharedARow = threadRowInBlock * TM + tmIdx;
           int sharedBCol = threadColInBlock * TN + tnIdx;
           localC[tmIdx][tnIdx] +=
-              sharedA[sharedARow * BK + kIdx] * sharedB[kIdx * BN + sharedBCol];
+              sharedA[kIdx * BM + sharedARow] * sharedB[kIdx * BN + sharedBCol];
         }
       }
     }
@@ -45,15 +53,15 @@ __global__ void SgemmVectorize(int M, int N, int K, float alpha, const float *A,
   }
   for (int tmIdx = 0; tmIdx < TM; tmIdx++) {
     for (int tnIdx = 0; tnIdx < TN; tnIdx += 4) {
-      int cRow = blockIdx.x * BM + threadRowInBlock * TM + tmIdx;
-      int cCol = blockIdx.y * BN + threadColInBlock * TN + tnIdx;
+      int rowC = blockIdx.x * BM + threadRowInBlock * TM + tmIdx;
+      int colC = blockIdx.y * BN + threadColInBlock * TN + tnIdx;
       float4 tmpC;
-      tmpC = reinterpret_cast<const float4 *>(&C[cRow * N + cCol])[0];
+      tmpC = reinterpret_cast<const float4 *>(&C[rowC * N + colC])[0];
       tmpC.x = alpha * localC[tmIdx][tnIdx] + beta * tmpC.x;
       tmpC.y = alpha * localC[tmIdx][tnIdx + 1] + beta * tmpC.y;
       tmpC.z = alpha * localC[tmIdx][tnIdx + 2] + beta * tmpC.z;
       tmpC.w = alpha * localC[tmIdx][tnIdx + 3] + beta * tmpC.w;
-      reinterpret_cast<float4 *>(&C[cRow * N + cCol])[0] = tmpC;
+      reinterpret_cast<float4 *>(&C[rowC * N + colC])[0] = tmpC;
     }
   }
 }

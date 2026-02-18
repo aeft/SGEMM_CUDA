@@ -156,3 +156,10 @@ float4 tmpA = reinterpret_cast<const float4 *>(&A[x])[0];
 // Example of vectorized store
 reinterpret_cast<float4 *>(&C[y])[0] = tmpC;
 ```
+
+#### Hints
+1. If you cannot match the performance of the reference implementation, try to eliminate bank conflicts when accessing shared memory.
+2. Transpose the tile of A when loading it into shared memory.
+
+#### Notes
+1. I found move the inner k loop outside of the tm/tn and apply register caching didn't improve performance. This may be because the compiler can already optimize register usage well in the original code. TODO: analyze the assembly code.
