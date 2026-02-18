@@ -147,3 +147,12 @@ When a warp generates many memory transactions, these transactions contend for t
 Row 2 outperforms Row 1: 2D blocktiling improves data reuse. Each loaded value contributes to TM×TN outputs instead of TM, increasing arithmetic intensity.
 
 Row 3 outperforms Row 2: (1) More warps per block (8 vs 2) enables better latency hiding; (2) Fewer total blocks (1024 vs 4096) reduces kernel launch overhead and duplicate data loading from global memory.
+
+### Kernel 6: Vectorized Memory Access
+1. Use vectorized memory access.
+```cpp
+// Example of vectorized load
+float4 tmpA = reinterpret_cast<const float4 *>(&A[x])[0];
+// Example of vectorized store
+reinterpret_cast<float4 *>(&C[y])[0] = tmpC;
+```

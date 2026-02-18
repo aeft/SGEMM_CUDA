@@ -19,5 +19,3 @@ __pycache__/
 .claude/
 *.egg-info/
 .cache/
-
-CLAUDE.md
