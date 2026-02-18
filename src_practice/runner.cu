@@ -56,7 +56,7 @@ void CudaDeviceInfo() {
 void randomize_matrix(float *mat, int N) {
   // NOTICE: Use gettimeofday instead of srand((unsigned)time(NULL)); the time
   // precision is too low and the same random number is generated.
-  struct timeval time {};
+  struct timeval time{};
   gettimeofday(&time, nullptr);
   srand(time.tv_usec);
   for (int i = 0; i < N; i++) {
@@ -230,7 +230,17 @@ void runSgemmResolveBankExtraCol(int M, int N, int K, float alpha, float *A,
 
 void runSgemmAutotuned(int M, int N, int K, float alpha, float *A, float *B,
                        float beta, float *C) {
-  throw std::runtime_error("Kernel 9 (Autotuned) not implemented yet");
+  const int BM = 128;
+  const int BN = 128;
+  const int BK = 8;
+  const int TM = 8;
+  const int TN = 8;
+  const int NUM_THREADS = 256;
+  dim3 gridDim(CEIL_DIV(M, BM), CEIL_DIV(N, BN));
+  dim3 blockDim(NUM_THREADS);
+
+  SgemmAutotuned<BM, BN, BK, TM, TN, NUM_THREADS>
+      <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
 void runSgemmWarptiling(int M, int N, int K, float alpha, float *A, float *B,

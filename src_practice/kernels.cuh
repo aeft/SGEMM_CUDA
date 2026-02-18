@@ -3,7 +3,6 @@
 // Common macros and constants
 #define CEIL_DIV(M, N) (((M) + (N)-1) / (N))
 const int WARPSIZE = 32; // warpSize is not constexpr
-const uint K9_NUM_THREADS = 256;
 
 // Practice implementations of SGEMM kernels
 // Uncomment as you implement each kernel
@@ -16,6 +15,6 @@ const uint K9_NUM_THREADS = 256;
 #include "kernels/6_kernel_vectorize.cuh"
 // #include "kernels/7_kernel_resolve_bank_conflicts.cuh"
 // #include "kernels/8_kernel_bank_extra_col.cuh"
-// #include "kernels/9_kernel_autotuned.cuh"
+#include "kernels/9_kernel_autotuned.cuh"
 // #include "kernels/10_kernel_warptiling.cuh"
 // #include "kernels/11_kernel_double_buffering.cuh"

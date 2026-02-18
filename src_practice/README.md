@@ -163,3 +163,11 @@ reinterpret_cast<float4 *>(&C[y])[0] = tmpC;
 
 #### Notes
 1. I found move the inner k loop outside of the tm/tn and apply register caching didn't improve performance. This may be because the compiler can already optimize register usage well in the original code. TODO: analyze the assembly code.
+
+### Kernel 9: Autotuning
+1. Use autotuning script to find the best configuration for block size and thread tile size.
+2. The code should be flexible enough to support different configurations without code changes. (e.g., each thread may need to load multiple iterations)
+
+#### Notes
+1. Interestingly, when I changed `BM * BN / (TM * TN)` to `blockDim.x` (they have the same value), the performance dropped from 15,000 GFLOPS to 7,000 GFLOPS. This may be because the compiler can optimize better when the number of threads per block is known at compile time, allowing for more aggressive optimizations and better resource allocation. TODO: analyze the assembly code.
+2. Run `scripts/kernel_9_autotuner_practice.sh` to find a configuration that beats the reference!
